@@ -1,62 +1,54 @@
 package auth
 
 import (
-	"errors"
-	"fmt"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lucasvmiguel/goauth/auth/reqandresp"
+	"github.com/lucasvmiguel/goauth/auth/responses"
+	"github.com/lucasvmiguel/goauth/auth/user"
+	"github.com/lucasvmiguel/goauth/token"
 )
 
-type UserAuth struct {
-	ID             string
-	IP             string
-	TokenType      string
-	ExpireDatetime time.Time
-	PairToken      string
-}
 type CallbackAuthentication func(string, string) string
 type CallbackAuthorization func(string, string) bool
 
-var mapAccessToken map[string]UserAuth
-var mapRefreshToken map[string]UserAuth
+var mapAccessToken map[string]user.UserAuth
+var mapRefreshToken map[string]user.UserAuth
 
 func init() {
-	mapAccessToken = make(map[string]UserAuth)
-	mapRefreshToken = make(map[string]UserAuth)
+	mapAccessToken = make(map[string]user.UserAuth)
+	mapRefreshToken = make(map[string]user.UserAuth)
 }
 
 func Authorization(e *gin.RouterGroup, cb CallbackAuthorization) {
 	e.Use(func(c *gin.Context) {
 
-		user, err := userAuth(c)
+		user, err := user.CreateUserAuth(c, mapAccessToken)
 		if err != nil {
-			reqandresp.Error(c, 401, err.Error())
+			responses.Error(c, 401, err.Error())
 			return
 		}
 
 		if !cb(c.Request.RequestURI, user.ID) {
-			reqandresp.Unathorized(c)
+			responses.Unathorized(c)
 			return
 		}
 	})
 }
 
 func Authentication(c *gin.Context) {
-	user, err := userAuth(c)
+	user, err := user.CreateUserAuth(c, mapAccessToken)
 	if err != nil {
-		reqandresp.Error(c, 401, err.Error())
+		responses.Error(c, 401, err.Error())
 		return
 	}
-	if user.TokenType != reqandresp.TokenTypeResp {
-		reqandresp.InvalidToken(c)
+	if user.TokenType != responses.TokenTypeResp {
+		responses.InvalidToken(c)
 		return
 	}
 
 	if user.ExpireDatetime.Before(time.Now()) {
-		reqandresp.TokenExpired(c)
+		responses.TokenExpired(c)
 		return
 	}
 }
@@ -76,9 +68,6 @@ func RouteToken(e *gin.Engine, cb CallbackAuthentication) {
 		default:
 			invalidGT(c)
 		}
-
-		fmt.Println(mapAccessToken)
-		fmt.Println(mapRefreshToken)
 	})
 }
 
@@ -87,32 +76,32 @@ func passwordGT(c *gin.Context, cb CallbackAuthentication) {
 	password := c.Query("password")
 
 	if username == "" || password == "" {
-		reqandresp.InvalidParams(c)
+		responses.InvalidParams(c)
 		return
 	}
 
 	if id := cb(username, password); id != "" {
-		accessToken := reqandresp.GenerateToken()
-		refreshToken := reqandresp.GenerateToken()
+		accessToken := token.Generate()
+		refreshToken := token.Generate()
 
-		mapAccessToken[accessToken] = UserAuth{
+		mapAccessToken[accessToken] = user.UserAuth{
 			id,
 			c.ClientIP(),
-			reqandresp.TokenTypeResp,
+			responses.TokenTypeResp,
 			time.Now().Add(24 * time.Hour), //1 dia
 			refreshToken,
 		}
-		mapRefreshToken[refreshToken] = UserAuth{
+		mapRefreshToken[refreshToken] = user.UserAuth{
 			id,
 			c.ClientIP(),
-			reqandresp.TokenTypeResp,
+			responses.TokenTypeResp,
 			time.Now().Add(8760 * time.Hour), //1 ano
 			accessToken,
 		}
 
-		reqandresp.Success(c, accessToken, refreshToken)
+		responses.Success(c, accessToken, refreshToken)
 	} else {
-		reqandresp.FailPassword(c)
+		responses.FailPassword(c)
 	}
 }
 
@@ -121,7 +110,7 @@ func refreshTokenGT(c *gin.Context) {
 	refreshToken := c.Query("refresh_token")
 
 	if refreshToken == "" {
-		reqandresp.InvalidParams(c)
+		responses.InvalidParams(c)
 		return
 	}
 
@@ -131,49 +120,31 @@ func refreshTokenGT(c *gin.Context) {
 		delete(mapRefreshToken, refreshToken)
 		delete(mapAccessToken, userAuth.PairToken)
 
-		accessT := reqandresp.GenerateToken()
-		refreshT := reqandresp.GenerateToken()
+		accessT := token.Generate()
+		refreshT := token.Generate()
 
-		mapAccessToken[accessT] = UserAuth{
+		mapAccessToken[accessT] = user.UserAuth{
 			userAuth.ID,
 			c.ClientIP(),
-			reqandresp.TokenTypeResp,
+			responses.TokenTypeResp,
 			time.Now().Add(24 * time.Hour), //1 dia
 			refreshT,
 		}
 
-		mapRefreshToken[refreshT] = UserAuth{
+		mapRefreshToken[refreshT] = user.UserAuth{
 			userAuth.ID,
 			c.ClientIP(),
-			reqandresp.TokenTypeResp,
+			responses.TokenTypeResp,
 			time.Now().Add(8760 * time.Hour), //1 ano
 			accessT,
 		}
 
-		reqandresp.Success(c, accessT, refreshT)
+		responses.Success(c, accessT, refreshT)
 	} else {
-		reqandresp.InvalidToken(c)
+		responses.InvalidToken(c)
 	}
 }
 
 func invalidGT(c *gin.Context) {
-	reqandresp.InvalidParams(c)
-}
-
-func userAuth(c *gin.Context) (*UserAuth, error) {
-
-	authorization := c.Request.Header.Get("authorization")
-	autho := strings.Split(authorization, " ")
-
-	if authorization == "" || len(autho) != 2 {
-		return nil, errors.New("invalid params")
-	}
-	//tokenType := autho[0]
-	token := autho[1]
-	user, ok := mapAccessToken[token]
-	if !ok {
-		return nil, errors.New("invalid token")
-	}
-
-	return &user, nil
+	responses.InvalidParams(c)
 }

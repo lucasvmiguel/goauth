@@ -1,3 +1,4 @@
 -Organizar o projeto
 -Criar uma hierarquia de erros para o erro ser mais descritivo
 -token não está gerando aleatóriamente, grande parte das vezes ele gera o mesmo token
+-Gerar documentação no código e documentação de readme

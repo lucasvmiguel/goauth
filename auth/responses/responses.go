@@ -1,7 +1,6 @@
-package reqandresp
+package responses
 
 import (
-	"math/rand"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -18,16 +17,6 @@ const (
 	ExpiresInResp = 3600
 	TokenSize     = 20
 )
-
-func GenerateToken() string {
-
-	const chars = "abcdefghijklmnopqrstuvwxyz0123456789"
-	result := make([]byte, TokenSize)
-	for i := 0; i < TokenSize; i++ {
-		result[i] = chars[rand.Intn(len(chars))]
-	}
-	return string(result)
-}
 
 func Success(c *gin.Context, accessToken string, refreshToken string) {
 	c.JSON(http.StatusOK, gin.H{
