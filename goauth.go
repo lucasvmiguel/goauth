@@ -2,16 +2,18 @@ package goauth
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/lucasvmiguel/goauth/authentication"
+	"github.com/lucasvmiguel/goauth/auth"
 )
 
-func Init(router *gin.Engine, cb authentication.Callback) *gin.RouterGroup {
+func Init(router *gin.Engine, cbAuthentication auth.CallbackAuthentication, cbAuthorization auth.CallbackAuthorization) *gin.RouterGroup {
 
-	authentication.RouteToken(router, cb)
+	auth.RouteToken(router, cbAuthentication)
 
 	aut := router.Group("/")
 
-	aut.Use(authentication.Interceptor)
+	aut.Use(auth.Authentication)
+
+	auth.Authorization(aut, cbAuthorization)
 
 	return aut
 }

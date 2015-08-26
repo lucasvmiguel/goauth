@@ -48,16 +48,33 @@ func InvalidParams(c *gin.Context) {
 	c.JSON(http.StatusNotAcceptable, gin.H{
 		ErrorProto: "invalid params",
 	})
+	c.Abort()
 }
 
 func InvalidToken(c *gin.Context) {
 	c.JSON(http.StatusNotAcceptable, gin.H{
 		ErrorProto: "invalid token",
 	})
+	c.Abort()
 }
 
 func TokenExpired(c *gin.Context) {
 	c.JSON(http.StatusNotAcceptable, gin.H{
 		ErrorProto: "token expired",
 	})
+	c.Abort()
+}
+
+func Unathorized(c *gin.Context) {
+	c.JSON(http.StatusUnauthorized, gin.H{
+		ErrorProto: "Unathorized",
+	})
+	c.Abort()
+}
+
+func Error(c *gin.Context, status int, msg string) {
+	c.JSON(status, gin.H{
+		ErrorProto: msg,
+	})
+	c.Abort()
 }

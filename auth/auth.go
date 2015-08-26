@@ -1,21 +1,24 @@
-package authentication
+package auth
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lucasvmiguel/goauth/authentication/reqandresp"
+	"github.com/lucasvmiguel/goauth/auth/reqandresp"
 )
 
 type UserAuth struct {
 	ID             string
 	IP             string
+	TokenType      string
 	ExpireDatetime time.Time
 	PairToken      string
 }
-type Callback func(string, string) string
+type CallbackAuthentication func(string, string) string
+type CallbackAuthorization func(string, string) bool
 
 var mapAccessToken map[string]UserAuth
 var mapRefreshToken map[string]UserAuth
@@ -25,34 +28,42 @@ func init() {
 	mapRefreshToken = make(map[string]UserAuth)
 }
 
-func Interceptor(c *gin.Context) {
-	c
-	authorization := c.Query("authorization")
-	autho := strings.Split(authorization, " ")
+func Authorization(e *gin.RouterGroup, cb CallbackAuthorization) {
+	e.Use(func(c *gin.Context) {
 
-	if authorization == "" || len(autho) != 2 {
-		reqandresp.InvalidParams(c)
-		c.Abort()
+		user, err := userAuth(c)
+		if err != nil {
+			reqandresp.Error(c, 401, err.Error())
+			return
+		}
+
+		if !cb(c.Request.RequestURI, user.ID) {
+			reqandresp.Unathorized(c)
+			return
+		}
+	})
+}
+
+func Authentication(c *gin.Context) {
+	user, err := userAuth(c)
+	if err != nil {
+		reqandresp.Error(c, 401, err.Error())
+		return
 	}
-	//tokenType := autho[0]
-	token := autho[1]
-
-	userAuth, ok := mapAccessToken[token]
-
-	if !ok {
+	if user.TokenType != reqandresp.TokenTypeResp {
 		reqandresp.InvalidToken(c)
-		c.Abort()
+		return
 	}
 
-	if userAuth.ExpireDatetime.Before(time.Now()) {
+	if user.ExpireDatetime.Before(time.Now()) {
 		reqandresp.TokenExpired(c)
-		c.Abort()
+		return
 	}
 }
 
-func RouteToken(c *gin.Engine, cb Callback) {
+func RouteToken(e *gin.Engine, cb CallbackAuthentication) {
 
-	c.POST("/token", func(c *gin.Context) {
+	e.POST("/token", func(c *gin.Context) {
 
 		grantType := c.Query("grant_type")
 		//clientId := c.Query("client_id")
@@ -71,7 +82,7 @@ func RouteToken(c *gin.Engine, cb Callback) {
 	})
 }
 
-func passwordGT(c *gin.Context, cb Callback) {
+func passwordGT(c *gin.Context, cb CallbackAuthentication) {
 	username := c.Query("username")
 	password := c.Query("password")
 
@@ -87,12 +98,14 @@ func passwordGT(c *gin.Context, cb Callback) {
 		mapAccessToken[accessToken] = UserAuth{
 			id,
 			c.ClientIP(),
+			reqandresp.TokenTypeResp,
 			time.Now().Add(24 * time.Hour), //1 dia
 			refreshToken,
 		}
 		mapRefreshToken[refreshToken] = UserAuth{
 			id,
 			c.ClientIP(),
+			reqandresp.TokenTypeResp,
 			time.Now().Add(8760 * time.Hour), //1 ano
 			accessToken,
 		}
@@ -124,6 +137,7 @@ func refreshTokenGT(c *gin.Context) {
 		mapAccessToken[accessT] = UserAuth{
 			userAuth.ID,
 			c.ClientIP(),
+			reqandresp.TokenTypeResp,
 			time.Now().Add(24 * time.Hour), //1 dia
 			refreshT,
 		}
@@ -131,12 +145,12 @@ func refreshTokenGT(c *gin.Context) {
 		mapRefreshToken[refreshT] = UserAuth{
 			userAuth.ID,
 			c.ClientIP(),
+			reqandresp.TokenTypeResp,
 			time.Now().Add(8760 * time.Hour), //1 ano
 			accessT,
 		}
 
 		reqandresp.Success(c, accessT, refreshT)
-		return
 	} else {
 		reqandresp.InvalidToken(c)
 	}
@@ -144,4 +158,22 @@ func refreshTokenGT(c *gin.Context) {
 
 func invalidGT(c *gin.Context) {
 	reqandresp.InvalidParams(c)
+}
+
+func userAuth(c *gin.Context) (*UserAuth, error) {
+
+	authorization := c.Request.Header.Get("authorization")
+	autho := strings.Split(authorization, " ")
+
+	if authorization == "" || len(autho) != 2 {
+		return nil, errors.New("invalid params")
+	}
+	//tokenType := autho[0]
+	token := autho[1]
+	user, ok := mapAccessToken[token]
+	if !ok {
+		return nil, errors.New("invalid token")
+	}
+
+	return &user, nil
 }
