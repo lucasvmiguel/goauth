@@ -1,4 +1,9 @@
 -Organizar o projeto
+-callback de logout???
 -Criar uma hierarquia de erros para o erro ser mais descritivo
--token não está gerando aleatóriamente, grande parte das vezes ele gera o mesmo token
 -Gerar documentação no código e documentação de readme
+-third part separado em providers
+-models separados
+-resource para abstrair o model | map
+-debug() para ver o que está acontecendo!
+-id ou interface????

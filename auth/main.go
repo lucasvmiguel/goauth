@@ -36,10 +36,10 @@ func main() {
 		c.String(200, "TESTE")
 	})
 
-	router.Run(":8080")
+	router.Run(":8082")
 }
 
-func ctrlAuthentication(username string, password string) string {
+func ctrlAuthentication(username string, password string, clientID string) string {
 	if username == "lucas" && password == "123456" {
 		return "1"
 	}
