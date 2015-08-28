@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 OAUTH2 - flow resource owner password credentials
 
 "With the resource owner password credentials grant type, the user provides their service credentials (username and password) directly to the application, which uses the credentials to obtain an access token from the service. This grant type should only be enabled on the authorization server if other flows are not viable. Also, it should only be used if the application is trusted by the user (e.g. it is owned by the service, or the user's desktop OS)." Mitchell Anicas
@@ -60,3 +61,70 @@ OAUTH2 - flow resource owner password credentials
 
   	return false
   }
+=======
+projeto de autorização e autenticação em golang usando o flow Password credentials(OAuth2)
+
+package main
+
+import (
+	_ "fmt"
+
+	"github.com/gin-gonic/gin"
+	"github.com/lucasvmiguel/goauth"
+)
+
+func main() {
+	router := gin.Default()
+	router.Use(func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE")
+		c.Header("Access-Control-Allow-Headers",
+			"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+	})
+
+	//callback to validate authentication
+	a := goauth.Init(router, ctrlAuthentication, ctrlAuthorization, true)
+
+	a.GET("/profile", func(c *gin.Context) {
+		roles := []string{"admin", "teste"}
+
+		c.JSON(200, gin.H{
+			"email": "lucas@gmail.com",
+			"name":  "lucas",
+			"roles": roles,
+		})
+	})
+
+	a.GET("/admin", func(c *gin.Context) {
+		c.String(200, "ADMIN")
+	})
+
+	a.GET("/teste", func(c *gin.Context) {
+		c.String(200, "TESTE")
+	})
+
+	router.Run(":8082")
+}
+
+func ctrlAuthentication(username string, password string, clientID string) (string, interface{}) {
+	if username == "lucas" && password == "123456" {
+		return "1", nil
+	}
+	return "", nil
+}
+
+func ctrlAuthorization(path string, id string) bool {
+	if id == "1" && path == "/profile" {
+		return true
+	}
+	if id == "1" && path == "/admin" {
+		return true
+	}
+	if id == "2" && path == "/teste" {
+		return true
+	}
+
+	return false
+}
+                                                               
+>>>>>>> 4acc17dcb4ec0daa09f18ede85e66b8b11e69736
