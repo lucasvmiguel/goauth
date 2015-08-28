@@ -1,14 +1,20 @@
 package auth
 
 import (
-	res "github.com/lucasvmiguel/goauth/auth/resource"
 	"strings"
+
+	er "github.com/lucasvmiguel/goauth/auth/errors"
+	prov "github.com/lucasvmiguel/goauth/auth/provider"
 )
 
-var resource *res.Resourcer
+var (
+	provider prov.Provider
+	Debug    bool
+)
 
 func init() {
-	resource = res.Resourcer(res.Map{})
+	//TODO aqui poderão ir outros tipos de Providers no futuro
+	provider = prov.NewMap()
 }
 
 func parseAuthorization(strAuth string) (string, string, error) {
@@ -16,7 +22,7 @@ func parseAuthorization(strAuth string) (string, string, error) {
 	strs := strings.Split(strAuth, " ")
 
 	if len(strs) != 2 {
-		return "", "", ErrInvalidParameter
+		return "", "", er.ErrInvalidParameters
 	}
 
 	return strs[0], strs[1], nil

@@ -1,20 +1,23 @@
 package auth
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
-	"github.com/lucasvmiguel/goauth/auth/responses"
+	er "github.com/lucasvmiguel/goauth/auth/errors"
+	resp "github.com/lucasvmiguel/goauth/auth/responses"
 )
 
 //CallbackAuthentication gives the power to use your logic to authenticate
 //first parameter is the username
 //second parameter is the password
 //third parameter is the client_id
-type CallbackAuthentication func(string, string, string) string
+type CallbackAuthentication func(string, string, string) (string, interface{})
 
+//RouteToken make the route "/token" and route the requests
 func RouteToken(e *gin.Engine, cb CallbackAuthentication) {
 
 	e.POST("/token", func(c *gin.Context) {
-
 		switch c.Query("grant_type") {
 		case "password":
 			passwordGT(c, cb)
@@ -25,38 +28,35 @@ func RouteToken(e *gin.Engine, cb CallbackAuthentication) {
 		default:
 			invalidGT(c)
 		}
+
+		if Debug {
+			provider.Debug()
+		}
 	})
 }
 
 func Authentication(c *gin.Context) {
-
 	//TokenType underscore
-	token, _, err := parseAuthorization(c.Query("authorization"))
-
-	// fmt.Println(mapAccessToken)
-	// fmt.Println(mapRefreshToken)
-
+	_, token, err := parseAuthorization(c.Request.Header.Get("authorization"))
 	if err != nil {
-		responses.Error(c, 401, err.Error())
+		resp.Error(c, err)
+		provider.Debug()
 		return
 	}
 
-	user, err2 := resource.UserByAccessT(token)
-
-	if err2 != nil {
-		responses.Error(c, 401, err2.Error())
-		return
-	}
-
-	if user.TokenType != responses.TokenTypeResp {
-		responses.InvalidToken(c)
+	user, err := provider.UserByAccessT(token)
+	if err != nil {
+		resp.Error(c, err)
+		provider.Debug()
 		return
 	}
 
 	if user.ExpireAccessDatetime.Before(time.Now()) {
-		responses.TokenExpired(c)
+		resp.Error(c, er.ErrTokenExpired)
+		provider.Debug()
 		return
 	}
+	provider.Debug()
 }
 
 func passwordGT(c *gin.Context, cb CallbackAuthentication) {
@@ -65,51 +65,56 @@ func passwordGT(c *gin.Context, cb CallbackAuthentication) {
 	clientID := c.Query("client_id")
 
 	if username == "" || password == "" || clientID == "" {
-		responses.InvalidParams(c)
+		resp.Error(c, er.ErrInvalidParameters)
 		return
 	}
 
-	if ID := cb(username, password, clientID); ID != "" {
-
-		user, _ := resource.InsertUser(ID, c.ClientIP())
-		responses.Success(c, user.AccessToken, user.RefreshToken)
+	ID, obj := cb(username, password, clientID)
+	if ID == "" {
+		resp.Error(c, er.ErrValidateToken)
+		return
 	}
-	responses.FailPassword(c)
+
+	user, err := provider.InsertUser(ID, c.ClientIP(), obj)
+
+	if err != nil {
+		//TODO verificar se foi inserido com sucesso
+	}
+
+	resp.Success(c, user.AccessToken, user.RefreshToken)
 }
 
 func refreshTokenGT(c *gin.Context) {
 
 	refreshT := c.Query("refresh_token")
-
 	if refreshT == "" {
-		responses.InvalidParams(c)
+		resp.Error(c, er.ErrInvalidParameters)
 		return
 	}
 
-	user, err := resource.UserByRefreshT(refreshT)
-
+	user, err := provider.UserByRefreshT(refreshT)
 	if err != nil {
-		responses.InvalidToken(c)
+		resp.Error(c, er.ErrUndefinedToken)
 		return
 	}
 
-	if user.ExpireRefreshDatetime.Before(time.Now()) {
-		responses.TokenExpired(c)
+	if err := provider.RemoveUserByAccessT(user.AccessToken); err != nil {
+		resp.Error(c, err)
 		return
 	}
 
-	err = resource.RemoveByToken(refreshT)
-
-	if err != nil {
-		responses.Error(c, 401, err.Error())
+	if err := provider.RemoveUserByRefreshT(user.RefreshToken); err != nil {
+		resp.Error(c, err)
+		return
 	}
 
-	user, err = resource.InsertUser(user.ID, c.ClientIP())
-
+	user, err = provider.InsertUser(user.ID, c.ClientIP(), user.Object)
 	if err != nil {
-		responses.Error(c, 401, err.Error())
+		resp.Error(c, err)
+		return
 	}
-	responses.Success(c, user.AccessToken, user.RefreshToken)
+
+	resp.Success(c, user.AccessToken, user.RefreshToken)
 }
 
 func destroyTokenGT(c *gin.Context) {
@@ -118,17 +123,29 @@ func destroyTokenGT(c *gin.Context) {
 	clientID := c.Query("client_id")
 
 	if accessT == "" || refreshT == "" || clientID == "" {
-		responses.InvalidParams(c)
+		resp.Error(c, er.ErrInvalidParameters)
 		return
 	}
 
-	if err := resource.RemoveByToken(accessT); err != nil {
-		responses.Error(c*gin.Context, 401, err.Error())
+	user, err := provider.UserByAccessT(accessT)
+	if err != nil {
+		resp.Error(c, er.ErrUndefinedToken)
+		return
 	}
 
-	responses.RemovedToken(c)
+	if err := provider.RemoveUserByAccessT(user.AccessToken); err != nil {
+		resp.Error(c, err)
+		return
+	}
+
+	if err := provider.RemoveUserByRefreshT(user.RefreshToken); err != nil {
+		resp.Error(c, err)
+		return
+	}
+
+	resp.RemovedToken(c)
 }
 
 func invalidGT(c *gin.Context) {
-	responses.InvalidParams(c)
+	resp.Error(c, er.ErrInvalidParameters)
 }

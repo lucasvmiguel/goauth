@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	er "github.com/lucasvmiguel/goauth/auth/errors"
 )
 
 const (
@@ -17,7 +18,7 @@ const (
 	RefreshTokenProto = "refresh_token"
 	//ErrorProto Proto field
 	ErrorProto = "error"
-	//Success Proto field
+	//SuccessProto Proto field
 	SuccessProto = "success"
 	//TokenTypeResp Proto field
 	TokenTypeResp = "Bearer"
@@ -42,49 +43,35 @@ func RemovedToken(c *gin.Context) {
 	})
 }
 
-//FailPassword send message with a error
-func FailPassword(c *gin.Context) {
-	c.JSON(http.StatusNotAcceptable, gin.H{
-		ErrorProto: "error to validate",
-	})
-}
-
-//InvalidParams send message with a error
-func InvalidParams(c *gin.Context) {
-	c.JSON(http.StatusNotAcceptable, gin.H{
-		ErrorProto: "invalid params",
-	})
-	c.Abort()
-}
-
-//InvalidToken send message with a error
-func InvalidToken(c *gin.Context) {
-	c.JSON(http.StatusNotAcceptable, gin.H{
-		ErrorProto: "invalid token",
-	})
-	c.Abort()
-}
-
-//TokenExpired send message with a error
-func TokenExpired(c *gin.Context) {
-	c.JSON(http.StatusNotAcceptable, gin.H{
-		ErrorProto: "token expired",
-	})
-	c.Abort()
-}
-
-//Unathorized send message with a error
-func Unathorized(c *gin.Context) {
-	c.JSON(http.StatusUnauthorized, gin.H{
-		ErrorProto: "Unathorized",
-	})
-	c.Abort()
-}
-
 //Error send message with a error where you can define status http and message to send
-func Error(c *gin.Context, status int, msg string) {
-	c.JSON(status, gin.H{
-		ErrorProto: msg,
+func Error(c *gin.Context, err error) {
+
+	var msgError string
+	var statusError int
+
+	switch err {
+	case er.ErrInvalidParameters:
+		msgError = er.ErrInvalidParameters.Error()
+		statusError = 400
+	case er.ErrUnauthorized:
+		msgError = er.ErrUnauthorized.Error()
+		statusError = 401
+	case er.ErrUndefinedToken:
+		msgError = er.ErrUndefinedToken.Error()
+		statusError = 406
+	case er.ErrTokenExpired:
+		msgError = er.ErrTokenExpired.Error()
+		statusError = 406
+	case er.ErrValidateToken:
+		msgError = er.ErrValidateToken.Error()
+		statusError = 406
+	default:
+		msgError = er.ErrUnknown.Error()
+		statusError = 406
+	}
+
+	c.JSON(statusError, gin.H{
+		ErrorProto: msgError,
 	})
 	c.Abort()
 }

@@ -1,10 +1,9 @@
 package auth
 
 import (
-	"errors"
-	"strings"
-
-	res "github.com/lucasvmiguel/goauth/auth/resource"
+	"github.com/gin-gonic/gin"
+	er "github.com/lucasvmiguel/goauth/auth/errors"
+	resp "github.com/lucasvmiguel/goauth/auth/responses"
 )
 
 //CallbackAuthorization gives the power to use your logic to authorize
@@ -18,22 +17,20 @@ func Authorization(e *gin.RouterGroup, cb CallbackAuthorization) {
 	e.Use(func(c *gin.Context) {
 
 		//TokenType underscore
-		token, _, err := parseAuthorization(c.Query("authorization"))
-
+		_, token, err := parseAuthorization(c.Request.Header.Get("authorization"))
 		if err != nil {
-			responses.Error(c, 401, err.Error())
+			resp.Error(c, err)
 			return
 		}
 
-		user, err := resource.UserByAccessT(token)
-
+		user, err := provider.UserByAccessT(token)
 		if err != nil {
-			responses.Error(c, 401, err.Error())
+			resp.Error(c, err)
 			return
 		}
 
 		if !cb(c.Request.RequestURI, user.ID) {
-			responses.Unathorized(c)
+			resp.Error(c, er.ErrUnauthorized)
 			return
 		}
 	})

@@ -1,9 +1,6 @@
--Organizar o projeto
--callback de logout???
--Criar uma hierarquia de erros para o erro ser mais descritivo
 -Gerar documentação no código e documentação de readme
--third part separado em providers
--models separados
--resource para abstrair o model | map
--debug() para ver o que está acontecendo!
--id ou interface????
+-verificar se já existe outro usuário associado a token
+-remover token refresh
+-verificar se foi inserido com sucesso
+-não poder inserir o mesmo id duas vezes
+-testes

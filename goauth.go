@@ -5,7 +5,9 @@ import (
 	"github.com/lucasvmiguel/goauth/auth"
 )
 
-func Init(router *gin.Engine, cbAuthentication auth.CallbackAuthentication, cbAuthorization auth.CallbackAuthorization) *gin.RouterGroup {
+func Init(router *gin.Engine, cbAuthentication auth.CallbackAuthentication, cbAuthorization auth.CallbackAuthorization, debug bool) *gin.RouterGroup {
+
+	auth.Debug = debug
 
 	auth.RouteToken(router, cbAuthentication)
 
