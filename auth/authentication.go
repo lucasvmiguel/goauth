@@ -8,9 +8,9 @@ import (
 	resp "github.com/lucasvmiguel/goauth/auth/responses"
 )
 
-//CallbackAuthentication gives the power to use your logic to authenticate
-//first parameter is the username
-//second parameter is the password
+//CallbackAuthentication gives the power to use your logic to authenticate:
+//first parameter is the username |
+//second parameter is the password |
 //third parameter is the client_id
 type CallbackAuthentication func(string, string, string) (string, interface{})
 

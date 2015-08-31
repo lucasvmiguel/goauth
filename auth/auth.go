@@ -9,7 +9,8 @@ import (
 
 var (
 	provider prov.Provider
-	Debug    bool
+	//Debug helper to debug the package
+	Debug bool
 )
 
 func init() {
