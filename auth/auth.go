@@ -13,8 +13,7 @@ var (
 )
 
 func init() {
-	//TODO aqui poderão ir outros tipos de Providers no futuro
-	provider = prov.NewMap()
+	provider = prov.New()
 }
 
 func parseAuthorization(strAuth string) (string, string, error) {

@@ -15,4 +15,6 @@ var (
 	ErrTokenExpired = errors.New("Token expired")
 	//ErrValidateToken error to validate the token
 	ErrValidateToken = errors.New("Error to validate")
+	//ErrIDRepeated error to validate the token
+	ErrIDRepeated = errors.New("This id already exists")
 )

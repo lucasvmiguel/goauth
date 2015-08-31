@@ -14,21 +14,34 @@ type Map struct {
 	mapRefreshT map[string]*res.User
 }
 
-func NewMap() *Map {
+//New creates a provider
+func New() *Map {
 	m := Map{}
 	m.mapAccessT = make(map[string]*res.User)
 	m.mapRefreshT = make(map[string]*res.User)
 	return &m
 }
 
+//InsertUser insert user in provider(map)
 func (m Map) InsertUser(ID string, IP string, obj interface{}) (*res.User, error) {
 
-	//TODO Verificar se já existe o usuário com o mesmo id cadastrado
 	accessT := token.Generate()
 	refreshT := token.Generate()
 
 	if ID == "" || IP == "" {
 		return nil, er.ErrInvalidParameters
+	}
+
+	for _, v := range m.mapAccessT {
+		if v.ID == ID {
+			return nil, er.ErrIDRepeated
+		}
+	}
+
+	for _, v := range m.mapRefreshT {
+		if v.ID == ID {
+			return nil, er.ErrIDRepeated
+		}
 	}
 
 	user := res.User{
@@ -48,36 +61,25 @@ func (m Map) InsertUser(ID string, IP string, obj interface{}) (*res.User, error
 	return &user, nil
 }
 
-func (m Map) RemoveUserByAccessT(token string) error {
+//RemoveUser remove user from provider(map)
+func (m Map) RemoveUser(user *res.User) error {
 
-	if token == "" {
+	if user.AccessToken == "" || user.RefreshToken == "" {
 		return er.ErrInvalidParameters
 	}
 
-	value, ok := m.mapAccessT[token]
+	_, okAccess := m.mapAccessT[user.AccessToken]
+	_, okRefresh := m.mapRefreshT[user.RefreshToken]
 
-	if ok {
-		delete(m.mapAccessT, value.AccessToken)
+	if okAccess && okRefresh {
+		delete(m.mapAccessT, user.AccessToken)
+		delete(m.mapRefreshT, user.RefreshToken)
 		return nil
 	}
 	return er.ErrUndefinedToken
 }
 
-func (m Map) RemoveUserByRefreshT(token string) error {
-
-	if token == "" {
-		return er.ErrInvalidParameters
-	}
-
-	value, ok := m.mapRefreshT[token]
-
-	if ok {
-		delete(m.mapRefreshT, value.RefreshToken)
-		return nil
-	}
-	return er.ErrUndefinedToken
-}
-
+//UserByAccessT get user from provider(map) by access token
 func (m Map) UserByAccessT(token string) (*res.User, error) {
 
 	if value, ok := m.mapAccessT[token]; ok {
@@ -86,6 +88,7 @@ func (m Map) UserByAccessT(token string) (*res.User, error) {
 	return nil, er.ErrUndefinedToken
 }
 
+//UserByRefreshT get user from provider(map) by refresh token
 func (m Map) UserByRefreshT(token string) (*res.User, error) {
 
 	if value, ok := m.mapRefreshT[token]; ok {
@@ -96,8 +99,8 @@ func (m Map) UserByRefreshT(token string) (*res.User, error) {
 
 //Debug help debug
 func (m Map) Debug() {
-	fmt.Print("Access token map: ")
+	fmt.Print("Access map token: ")
 	fmt.Println(m.mapAccessT)
-	fmt.Print("Refresh token map: ")
+	fmt.Print("Refresh map token: ")
 	fmt.Println(m.mapRefreshT)
 }

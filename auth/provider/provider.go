@@ -15,8 +15,7 @@ var (
 //Provider should be implement by any provider (map, db)
 type Provider interface {
 	InsertUser(string, string, interface{}) (*res.User, error)
-	RemoveUserByAccessT(string) error
-	RemoveUserByRefreshT(string) error
+	RemoveUser(*res.User) error
 	UserByAccessT(string) (*res.User, error)
 	UserByRefreshT(string) (*res.User, error)
 

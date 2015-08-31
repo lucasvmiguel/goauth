@@ -1,6 +1,4 @@
--Gerar documentação no código e documentação de readme
--verificar se já existe outro usuário associado a token
--remover token refresh
--verificar se foi inserido com sucesso
--não poder inserir o mesmo id duas vezes
+-documentação de readme (https://github.com/dghubble/oauth1) Ótima documentação!
 -testes
+-o que fazer com o token type??
+-poderão ir outros tipos de Providers no futuro
