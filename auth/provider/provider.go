@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	expireAccessDatetime  = time.Now().Add(24 * time.Hour)
-	expireRefreshDatetime = time.Now().Add(8760 * time.Hour)
+	expireAccessDatetime  = time.Now().Add(24 * time.Hour) //1 day
+	expireRefreshDatetime = time.Now().Add(8760 * time.Hour) //1 year
 	tokenType             = "Bearer"
 )
 

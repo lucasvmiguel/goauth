@@ -24,12 +24,12 @@ func NewMap() *Map {
 func (m Map) InsertUser(ID string, IP string, obj interface{}) (*res.User, error) {
 
 	//TODO Verificar se já existe o usuário com o mesmo id cadastrado
-	accessT := token.Generate()
-	refreshT := token.Generate()
-
 	if ID == "" || IP == "" {
 		return nil, er.ErrInvalidParameters
 	}
+	
+	accessT := token.Generate()
+	refreshT := token.Generate()
 
 	user := res.User{
 		ID:                    ID,
