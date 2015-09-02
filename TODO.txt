@@ -1,4 +1,3 @@
--documentação de readme (https://github.com/dghubble/oauth1) Ótima documentação!
--testes
--o que fazer com o token type??
--poderão ir outros tipos de Providers no futuro
+-tests!!!
+-token type for what?
+-others providers
