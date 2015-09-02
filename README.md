@@ -6,7 +6,7 @@ Goauth is a Go implementation of the [OAuth 2 flow resource owner password crede
 
 ## Install
 
-  go get github.com/dghubble/oauth1
+  go get github.com/lucasvmiguel/goauth
 
 ## Documentation
 
