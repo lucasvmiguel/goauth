@@ -25,13 +25,6 @@ func New() *Map {
 //InsertUser insert user in provider(map)
 func (m Map) InsertUser(ID string, IP string, obj interface{}) (*res.User, error) {
 
-<<<<<<< HEAD
-	//TODO Verificar se já existe o usuário com o mesmo id cadastrado
-=======
-	accessT := token.Generate()
-	refreshT := token.Generate()
-
->>>>>>> 7462ae6c0c43b0ab088da2d9cdd6461f5ff1e932
 	if ID == "" || IP == "" {
 		return nil, er.ErrInvalidParameters
 	}
