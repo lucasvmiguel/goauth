@@ -14,21 +14,13 @@
 ### Authorization Flow
 
 ###### SIMPLE REQUEST WITH TOKEN
-
-  <img src="https://pbs.twimg.com/media/CN3P89gWEAEMcuV.png">
-
+<img src="https://pbs.twimg.com/media/CN3P89gWEAEMcuV.png">
 ###### REQUEST TO GET TOKEN
-
-  <img src="https://pbs.twimg.com/media/CN3P89UW8AAMrvj.png">
-
+<img src="https://pbs.twimg.com/media/CN3P89UW8AAMrvj.png">
 ###### REQUEST TO REFRESH TOKEN
-
-  <img src="https://pbs.twimg.com/media/CN3P8-WWgAU1llO.png">
-
+<img src="https://pbs.twimg.com/media/CN3P8-WWgAU1llO.png">
 ###### REQUEST TO DESTROY TOKEN
-
-  <img src="https://pbs.twimg.com/media/CN3P898WoAAIAP_.png">
-
+<img src="https://pbs.twimg.com/media/CN3P898WoAAIAP_.png">
 #### CODE ON SERVER
 
       package main
