@@ -8,9 +8,9 @@ import (
 	resp "github.com/lucasvmiguel/goauth/auth/responses"
 )
 
-//CallbackAuthentication gives the power to use your logic to authenticate
-//first parameter is the username
-//second parameter is the password
+//CallbackAuthentication gives the power to use your logic to authenticate:
+//first parameter is the username |
+//second parameter is the password |
 //third parameter is the client_id
 type CallbackAuthentication func(string, string, string) (string, interface{})
 
@@ -35,6 +35,7 @@ func RouteToken(e *gin.Engine, cb CallbackAuthentication) {
 	})
 }
 
+//Authentication responsible to authenticate the user
 func Authentication(c *gin.Context) {
 	//TokenType underscore
 	_, token, err := parseAuthorization(c.Request.Header.Get("authorization"))
@@ -56,6 +57,7 @@ func Authentication(c *gin.Context) {
 		provider.Debug()
 		return
 	}
+
 	provider.Debug()
 }
 
@@ -78,7 +80,8 @@ func passwordGT(c *gin.Context, cb CallbackAuthentication) {
 	user, err := provider.InsertUser(ID, c.ClientIP(), obj)
 
 	if err != nil {
-		//TODO verificar se foi inserido com sucesso
+		resp.Error(c, err)
+		return
 	}
 
 	resp.Success(c, user.AccessToken, user.RefreshToken)
@@ -98,12 +101,7 @@ func refreshTokenGT(c *gin.Context) {
 		return
 	}
 
-	if err := provider.RemoveUserByAccessT(user.AccessToken); err != nil {
-		resp.Error(c, err)
-		return
-	}
-
-	if err := provider.RemoveUserByRefreshT(user.RefreshToken); err != nil {
+	if err := provider.RemoveUser(user); err != nil {
 		resp.Error(c, err)
 		return
 	}
@@ -133,12 +131,13 @@ func destroyTokenGT(c *gin.Context) {
 		return
 	}
 
-	if err := provider.RemoveUserByAccessT(user.AccessToken); err != nil {
-		resp.Error(c, err)
+	_, err = provider.UserByRefreshT(refreshT)
+	if err != nil {
+		resp.Error(c, er.ErrUndefinedToken)
 		return
 	}
 
-	if err := provider.RemoveUserByRefreshT(user.RefreshToken); err != nil {
+	if err := provider.RemoveUser(user); err != nil {
 		resp.Error(c, err)
 		return
 	}

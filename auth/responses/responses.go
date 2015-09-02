@@ -65,6 +65,9 @@ func Error(c *gin.Context, err error) {
 	case er.ErrValidateToken:
 		msgError = er.ErrValidateToken.Error()
 		statusError = 406
+	case er.ErrIDRepeated:
+		msgError = er.ErrIDRepeated.Error()
+		statusError = 406
 	default:
 		msgError = er.ErrUnknown.Error()
 		statusError = 406

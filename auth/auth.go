@@ -9,12 +9,12 @@ import (
 
 var (
 	provider prov.Provider
-	Debug    bool
+	//Debug helper to debug the package
+	Debug bool
 )
 
 func init() {
-	//TODO aqui poderão ir outros tipos de Providers no futuro
-	provider = prov.NewMap()
+	provider = prov.New()
 }
 
 func parseAuthorization(strAuth string) (string, string, error) {
